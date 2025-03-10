@@ -106,9 +106,6 @@ func NewDebugNode(*config.Config, *protobufs.SelfTestReport) (*Node, error) {
 		debugLoggerSet,
 		keyManagerSet,
 		storeSet,
-		pubSubSet,
-		engineSet,
-		consensusSet,
 		newNode,
 	))
 }
@@ -118,9 +115,6 @@ func NewNode(*config.Config, *protobufs.SelfTestReport) (*Node, error) {
 		loggerSet,
 		keyManagerSet,
 		storeSet,
-		pubSubSet,
-		engineSet,
-		consensusSet,
 		newNode,
 	))
 }

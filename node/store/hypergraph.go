@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -24,6 +25,7 @@ type HypergraphStore interface {
 		error,
 	)
 	LoadVertexData(id []byte) ([]application.Encrypted, error)
+	LoadRawVertexTree(id []byte) ([]byte, error)
 	SaveVertexTree(
 		txn Transaction,
 		id []byte,
@@ -118,6 +120,17 @@ func (p *PebbleHypergraphStore) NewTransaction(indexed bool) (
 	error,
 ) {
 	return p.db.NewBatch(indexed), nil
+}
+
+func (p *PebbleHypergraphStore) LoadRawVertexTree(id []byte) ([]byte, error) {
+	vertexData, closer, err := p.db.Get(hypergraphVertexDataKey(id))
+	if err != nil {
+		return nil, err
+	}
+
+	defer closer.Close()
+
+	return slices.Clone(vertexData), nil
 }
 
 func (p *PebbleHypergraphStore) LoadVertexTree(id []byte) (
