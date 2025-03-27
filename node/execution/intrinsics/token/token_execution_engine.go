@@ -469,16 +469,16 @@ func NewTokenExecutionEngine(
 		}
 	}
 
+	for k, v := range e.hypergraph.GetVertexAdds() {
+		fmt.Printf("printing debug data for shard key: %x %x\n", k.L1[:], k.L2[:])
+		qcrypto.DebugNode(v.GetTree().SetType, v.GetTree().PhaseType, k, v.GetTree().Root, 0, "")
+	}
+
 	commit := e.hypergraph.Commit()
 	if len(commit) == 0 {
 		fmt.Println("no commit")
 	} else {
 		fmt.Printf("root commit %x\n", e.hypergraph.Commit()[0])
-	}
-
-	for k, v := range e.hypergraph.GetVertexAdds() {
-		fmt.Printf("printing debug data for shard key: %x %x\n", k.L1[:], k.L2[:])
-		qcrypto.DebugNode(v.GetTree().SetType, v.GetTree().PhaseType, k, v.GetTree().Root, 0, "")
 	}
 
 	os.Exit(0)
