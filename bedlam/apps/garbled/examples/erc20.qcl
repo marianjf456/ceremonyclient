@@ -1,0 +1,146 @@
+// erc20.qcl
+package main
+
+import (
+    "math"
+)
+
+// 简化的 ERC20 合约
+type ERC20 struct {
+    // 总供应量
+    totalSupply uint256
+    // 余额映射 (只能表示有限数量的账户)
+    balances [10]uint256
+    // 授权映射 (简化版)
+    allowances [10][10]uint256
+    // 合约拥有者
+    owner uint8
+}
+
+// 获取余额
+func getBalance(token ERC20, account uint8) uint256 {
+    // 使用条件语句代替直接索引
+    var balance uint256
+    for i := 0; i < 10; i++ {
+        if i == account {
+            balance = token.balances[i]
+        }
+    }
+    return balance
+}
+
+// 设置余额
+func setBalance(token ERC20, account uint8, value uint256) ERC20 {
+    // 使用条件语句代替直接索引
+    for i := 0; i < 10; i++ {
+        if i == account {
+            token.balances[i] = value
+        }
+    }
+    return token
+}
+
+// 获取授权额度
+func getAllowance(token ERC20, owner uint8, spender uint8) uint256 {
+    // 使用条件语句代替直接索引
+    var allowance uint256
+    for i := 0; i < 10; i++ {
+        for j := 0; j < 10; j++ {
+            if i == owner && j == spender {
+                allowance = token.allowances[i][j]
+            }
+        }
+    }
+    return allowance
+}
+
+// 设置授权额度
+func setAllowance(token ERC20, owner uint8, spender uint8, value uint256) ERC20 {
+    // 使用条件语句代替直接索引
+    for i := 0; i < 10; i++ {
+        for j := 0; j < 10; j++ {
+            if i == owner && j == spender {
+                token.allowances[i][j] = value
+            }
+        }
+    }
+    return token
+}
+
+// 转账操作
+func transfer(token ERC20, from uint8, to uint8, amount uint256) (ERC20, bool) {
+    // 检查余额是否足够
+    fromBalance := getBalance(token, from)
+    if fromBalance < amount {
+        return token, false
+    }
+    
+    // 执行转账
+    token = setBalance(token, from, fromBalance - amount)
+    toBalance := getBalance(token, to)
+    token = setBalance(token, to, toBalance + amount)
+    
+    return token, true
+}
+
+// 授权操作
+func approve(token ERC20, owner uint8, spender uint8, amount uint256) ERC20 {
+    token = setAllowance(token, owner, spender, amount)
+    return token
+}
+
+// 授权转账
+func transferFrom(token ERC20, spender uint8, from uint8, to uint8, amount uint256) (ERC20, bool) {
+    // 检查授权额度
+    allowance := getAllowance(token, from, spender)
+    if allowance < amount {
+        return token, false
+    }
+    
+    // 检查余额
+    fromBalance := getBalance(token, from)
+    if fromBalance < amount {
+        return token, false
+    }
+    
+    // 更新授权额度
+    token = setAllowance(token, from, spender, allowance - amount)
+    
+    // 执行转账
+    token = setBalance(token, from, fromBalance - amount)
+    toBalance := getBalance(token, to)
+    token = setBalance(token, to, toBalance + amount)
+    
+    return token, true
+}
+
+// 铸造新代币 (只有拥有者可以)
+func mint(token ERC20, caller uint8, to uint8, amount uint256) (ERC20, bool) {
+    if caller != token.owner {
+        return token, false
+    }
+    
+    toBalance := getBalance(token, to)
+    token = setBalance(token, to, toBalance + amount)
+    token.totalSupply = token.totalSupply + amount
+    
+    return token, true
+}
+
+// 主函数 - 处理不同的操作类型
+func main(token ERC20, operation uint8, caller uint8, target uint8, amount uint256, target2 uint8) (ERC20, bool) {
+    // operation: 1=transfer, 2=approve, 3=transferFrom, 4=mint
+    
+    if operation == 1 {
+        return transfer(token, caller, target, amount)
+    } else if operation == 2 {
+        newToken := approve(token, caller, target, amount)
+        return newToken, true
+    } else if operation == 3 {
+        return transferFrom(token, caller, target, target2, amount)
+    } else if operation == 4 {
+        return mint(token, caller, target, amount)
+    }
+    
+    return token, false
+}
